@@ -27,6 +27,9 @@
 .outer-display .home-layout{padding:15px 43px 10px 12px;height:360px}.outer-display .app-grid{gap:12px 13px}.outer-display .app-item{font-size:7px}.outer-display .app-square{width:37px;height:37px}.outer-display .dock{gap:10px;bottom:auto;right:6px}.outer-display .dock .app-square{width:27px;height:27px}.outer-display .top-widgets{gap:9px;height:95px;margin-bottom:17px}.outer-display .top-widgets>div{padding:10px 9px}.outer-camera{left:auto;right:15px;top:14px;width:9px;height:9px}
 .reference-video{display:block;width:100%;max-height:300px;background:#181a20;border-radius:12px;margin-top:20px}
 .home-layout,.dock,.app-page{will-change:filter,transform}
+.screen-canvas .app-section{transform:translateX(var(--content-x,0px));will-change:transform}
+.widget-column{transition:none;will-change:transform,filter,opacity}
+.leaf{will-change:transform}
 .experience{font-size:13px}.experience small{font-size:11px}.outline{font-size:13px}.fold-state{font-size:14px}.slider-label{font-size:12px}.play-button{font-size:14px}.transition-info p{font-size:12px}.stage-bottom{font-size:12px}.text-button{font-size:12px}.footer{font-size:12px}.stage-label{font-size:10px}
 .app-page .app-back{color:#677ddd}.camera-view .app-back{color:#c5d0ff}
 @media(max-width:1100px){.experience{font-size:12px}.experience small{font-size:9px}.transition-info p{font-size:11px}.stage-bottom{font-size:10px}.text-button{font-size:10px}.footer{font-size:10px}}

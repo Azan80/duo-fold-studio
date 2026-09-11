@@ -4,13 +4,17 @@ Independent static foldable-phone interface demonstration. Serve `dist/` with an
 
 ## Included
 
-- Continuous hinge-angle control, automatic fold playback and slow motion.
+- Continuous hinge-angle control, smooth left-to-right folding, automatic eased playback and slow motion.
 - Inner and outer screen continuity with an edge dock and blurred widget reveal inspired by the supplied MKBHD clip.
 - Home screen, sample Photos viewer, editable Notes, Photos/Notes Split View, simulated Camera shutter, Settings and StandBy.
 - Two finishes, device rotation, lock/wake controls, responsive sizing and keyboard controls.
 - The original reference video is embedded in the About dialog with attribution.
 
 Reference: https://x.com/MKBHD/status/2097782855141335144
+
+## Deploying
+
+The Vercel configuration serves the tracked `dist/` directory directly. No install or build step is required. The project can be imported from GitHub using the Other framework preset.
 
 This is an approximation, not Apple software or an exact reproduction of iOS. Calls, live camera capture, live weather, third-party apps and actual music streaming are not implemented. Notes persist only for the current page session. Sample photography is loaded from Apple's public product announcement.
 
