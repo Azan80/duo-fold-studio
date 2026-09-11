@@ -32,6 +32,85 @@
 .leaf{will-change:transform}
 .experience{font-size:13px}.experience small{font-size:11px}.outline{font-size:13px}.fold-state{font-size:14px}.slider-label{font-size:12px}.play-button{font-size:14px}.transition-info p{font-size:12px}.stage-bottom{font-size:12px}.text-button{font-size:12px}.footer{font-size:12px}.stage-label{font-size:10px}
 .app-page .app-back{color:#677ddd}.camera-view .app-back{color:#c5d0ff}
+/* A single hinge timeline drives the hardware; the display follows with a
+   short settling response, so the screen never looks pasted onto the shell. */
+.phone-ui{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif}
+.memory-widget{height:310px;border-radius:21px;overflow:hidden;position:relative;background:#a2afc4}
+.memory-widget>button{border:0;padding:0;width:100%;height:100%;display:block;text-align:left;position:relative;color:white;background:transparent;cursor:pointer}
+.memory-widget img{width:100%;height:100%;object-fit:cover;display:block}
+.memory-widget>button:after{content:'';position:absolute;inset:50% 0 0;background:linear-gradient(transparent,#101725a6)}
+.memory-caption{position:absolute;left:15px;bottom:18px;z-index:1;display:flex;flex-direction:column;gap:5px}
+.memory-caption strong{font-size:15px;letter-spacing:-.3px}.memory-caption small{font-size:7px;letter-spacing:.5px}
+.top-widgets>.tiny-weather{background:linear-gradient(155deg,#18638d,#59a6cd);color:white}
+.tiny-weather small,.tiny-weather span{color:white;font-size:7px}
+.tiny-weather .weather-degree{font-weight:300;font-size:28px;line-height:1.05;margin-bottom:6px;letter-spacing:-1px}
+.tiny-weather span{line-height:1.15}
+.memory-play{position:absolute;right:13px;bottom:19px;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#ffffff38;backdrop-filter:blur(12px);font-size:11px;z-index:1}
+.home-layout{gap:41px;padding-left:25px;padding-right:54px}
+.widget-column{width:235px}
+.app-item>span:last-child:not(.app-square){font-size:6.5px;letter-spacing:-.1px}
+.app-square.photos-icon svg{width:32px;height:32px;stroke:none}
+.app-square.facetime-icon svg rect,.app-square.messages-icon svg path,.app-square.health-icon svg path{fill:currentColor;stroke:none}
+.app-square.facetime-icon svg path{fill:currentColor;stroke:none}
+.app-square.health-icon{background:#fff;color:#fa365c}
+.app-square.clock-icon{background:#fff;color:#191a1e}
+.app-square.camera-icon{background:linear-gradient(#bbbcc0,#858991);color:#252831}
+.app-square.phone-icon svg{fill:currentColor;stroke-width:.5}
+.app-square.music-icon svg{fill:currentColor;stroke-width:1}
+.hinge{opacity:.14!important;width:2px!important;left:309px!important}
+.left-leaf .inside{box-shadow:inset 1px 1px 0 #ffffff38}.right-leaf .inside{box-shadow:inset -1px 1px 0 #ffffff38}
+.stage{perspective:2200px;background:radial-gradient(ellipse at 50% 48%,#fff 0%,#f4f5f8 55%,#fafafa 85%)}
+.phone-face{border-color:#858994;box-shadow:inset 0 0 0 1px #ffffff30,inset 0 0 0 3px #181a20,0 1px 0 1px #06080c;}
+.inside{transform:translateZ(4px)}
+.left-leaf{transform:translateZ(var(--leaf-lift,0px)) rotateY(var(--left-angle,0deg))}
+.outside,.rear{transform:rotateY(180deg) translateZ(4px)}
+.leaf:before{content:'';position:absolute;inset:1px;border-radius:25px;background:linear-gradient(100deg,#252931,#a1a6b0 45%,#41454e 65%,#171a21);transform:translateZ(-1px);pointer-events:none}
+.inside:before,.outside:after{content:'';position:absolute;inset:0;z-index:10;pointer-events:none;border-radius:inherit;background:linear-gradient(115deg,transparent 15%,#fff 48%,transparent 73%);background-size:220% 100%;background-position:var(--reflection-x,100%) 0;opacity:var(--reflection,0)}
+.hinge{width:4px;left:308px;background:linear-gradient(90deg,#0002,#fff2,#0002);opacity:.5}
+.stage-shadow{width:64%;left:18%;height:30px;background:#17213b;opacity:var(--shadow-opacity,.12);transform:scaleX(var(--shadow-scale,1));filter:blur(22px);will-change:transform,opacity}
+.screen-canvas .phone-ui,.outer-display .phone-ui{filter:none}
+.screen-canvas .wallpaper{transform:translateX(var(--wallpaper-x,0px)) scale(1.05);will-change:transform}
+.widget-column{opacity:1;transform:none;filter:none}
+.widget-column>div{opacity:var(--widget-opacity,1);transform:translate3d(var(--widget-x,0px),0,0) scale(var(--widget-scale,1));filter:blur(var(--widget-blur,0px));transform-origin:right center;will-change:transform,opacity,filter;border:1px solid #ffffff70;box-shadow:0 4px 12px #2938540a,inset 0 1px 0 #ffffff80}
+.widget-column>div:nth-child(2){transform:translate3d(calc(var(--widget-x,0px)*.8),0,0) scale(var(--widget-scale,1))}
+.widget-column>div:nth-child(3){transform:translate3d(calc(var(--widget-x,0px)*.6),0,0) scale(var(--widget-scale,1))}
+.screen-canvas .app-grid>.app-item:nth-child(4n+1){transform:translateY(var(--icon-y-0,0px)) scale(var(--icon-scale-0,1))}
+.screen-canvas .app-grid>.app-item:nth-child(4n+2){transform:translateY(var(--icon-y-1,0px)) scale(var(--icon-scale-1,1))}
+.screen-canvas .app-grid>.app-item:nth-child(4n+3){transform:translateY(var(--icon-y-2,0px)) scale(var(--icon-scale-2,1))}
+.screen-canvas .app-grid>.app-item:nth-child(4n){transform:translateY(var(--icon-y-3,0px)) scale(var(--icon-scale-3,1))}
+.outer-display .home-layout,.outer-display .app-page{opacity:var(--cover-opacity,1);transform:scale(var(--cover-scale,1));filter:blur(var(--outer-blur,0px));transform-origin:center}
+.app-square{border:1px solid #ffffff38;box-shadow:0 3px 6px #30354722,inset 0 1px 1px #fff8;background-image:linear-gradient(155deg,#fff2,#fff0 55%,#0000000d)}
+.dock{box-shadow:inset 0 0 0 1px #ffffff4a,0 5px 15px #41485812;background:#ffffff38;backdrop-filter:blur(24px) saturate(1.3)}
+.angle-number{font-variant-numeric:tabular-nums}
+.screen-canvas:after{
+ content:'';position:absolute;inset:0;z-index:20;pointer-events:none;
+ background:linear-gradient(90deg,rgba(0,0,0,.97),rgba(0,0,0,.52) 28%,rgba(0,0,0,.08) 46%,transparent 50%);
+ opacity:var(--fold-wash,0);will-change:opacity;
+}
+.screen-canvas{background:#000}
+.screen-canvas .phone-ui{transform:translate3d(0,var(--inner-y,0px),0);will-change:transform}
+.left-leaf .screen-canvas .phone-ui{filter:blur(var(--left-blur,0px));will-change:filter}
+.left-leaf .screen-canvas .home-layout,.left-leaf .screen-canvas .app-page,.left-leaf .screen-canvas .standby,.left-leaf .screen-canvas .lock-screen{
+ transform:none;
+}
+.right-leaf .screen-canvas .phone-ui{filter:none;transform:none}
+@media(prefers-reduced-motion:reduce){.screen-canvas:after,.outer-display:after{display:none}}
+@media(min-width:781px){
+ .intro{padding-top:24px;padding-bottom:24px;align-items:center}
+ .intro h1{font-size:36px;line-height:1.12;margin-top:10px}
+ .workspace{min-height:440px}
+ .stage{min-height:440px;height:calc(100svh - 282px);max-height:620px}
+ .device-wrap{top:49%}
+ .stage-shadow{bottom:58px}
+ .stage-label{top:20px}
+ .stage-bottom{bottom:15px}
+ .right-panel{padding-top:20px}
+ .right-panel>.panel-heading{margin-bottom:12px}
+ .angle-number{margin-top:12px;font-size:48px}
+ .transition-info{margin-top:18px;padding-top:15px}
+ .reset-button{margin-top:12px}
+}
+@media(prefers-reduced-motion:reduce){.widget-column>div,.screen-canvas .app-grid>.app-item{filter:none!important;transform:none!important}}
 @media(max-width:1100px){.experience{font-size:12px}.experience small{font-size:9px}.transition-info p{font-size:11px}.stage-bottom{font-size:10px}.text-button{font-size:10px}.footer{font-size:10px}}
 @media(max-width:780px){.experience{font-size:11px}.outline{font-size:11px}.transition-info p{font-size:12px}.play-button{font-size:13px}.footer{font-size:10px}}
 @media(max-width:450px){.experience{font-size:9px}.stage-bottom{font-size:9px}.text-button{font-size:9px}}

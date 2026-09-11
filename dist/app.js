@@ -40,12 +40,14 @@ const photos=[
  {src:photoBase+'Apple-iPhone-Duo-2x-Telephoto-260909_big.jpg.large.jpg',alt:'Portrait in an open landscape'}
 ];
 const state={angle:180,experience:'home',app:'home',finish:'dark',locked:false,dark:false,brightness:100,note:'A little room for big ideas.\n\nTry folding the phone while you write.\nYour note stays with you.',photo:null,captured:false,playing:false,speed:1,rotated:false,track:false,calc:'0',transitionId:0};
-let motion=null,lastStamp=0,cyclePhase=0,scrubTarget=null;
+let motion=null,lastStamp=0,cyclePhase=0,scrubTarget=null,uiAngle=180;
+const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
+const deviceNode=$('#device'),stageNode=$('#stage');
 const smoothStep=t=>{const x=Math.max(0,Math.min(1,t));return x*x*x*(x*(x*6-15)+10);};
-function appIcon(app){const [id,name,color]=app;let content=id==='calendar'?'<small>WED</small>9':id==='photos'?'✳':id==='tv'?'tv':id==='store'?'A':id==='wallet'?'▰':id==='shortcuts'?'◈':icon(id);return `<button class="app-item" data-app="${id}" aria-label="Open ${name}"><span class="app-square ${id}-icon" style="--app-color:${color}">${content}</span><span>${name}</span></button>`;}
+function appIcon(app){const [id,name,color]=app;let content=id==='calendar'?'<small>WED</small>9':id==='photos'?`<svg viewBox="0 0 40 40" aria-hidden="true">${['#ffb52b','#f6d935','#85c94d','#36bfa4','#43a6df','#7376d9','#cd68b7','#f17375'].map((c,i)=>`<ellipse cx="20" cy="11" rx="6" ry="10" fill="${c}" fill-opacity=".86" transform="rotate(${i*45} 20 20)"/>`).join('')}</svg>`:id==='tv'?'tv':id==='store'?'A':id==='wallet'?'▰':id==='shortcuts'?'◈':icon(id);return `<button class="app-item" data-app="${id}" aria-label="Open ${name}"><span class="app-square ${id}-icon" style="--app-color:${color}">${content}</span><span>${name}</span></button>`;}
 function statusBar(){return `<div class="statusbar"><span>9:41</span><span class="status-icons">${icon('signal')}${icon('wifi')}<i class="battery"></i></span></div>`;}
-function widgets(){return `<div class="widget-column"><div class="weather-widget"><div class="city">Cupertino</div><div class="temperature">24°</div><div class="weather-condition">☀ Sunny &nbsp; H:27° L:18°</div></div><div class="calendar-widget"><small>WEDNESDAY</small><strong>9</strong><div class="calendar-event">A little time to explore<br>10:00 – 11:00</div></div><div class="battery-widget"><span>◉ &nbsp; ◉ &nbsp; ◉</span><b>97%</b></div></div>`;}
-function home(){return `<div class="home-layout">${widgets()}<div class="app-section"><div class="top-widgets"><div class="tiny-weather"><small>☀ Weather</small><div class="weather-bars">▁ ▂ ▄ ▃ ▂ ▅ ▄</div><span>7% &nbsp;24°</span></div><div class="tiny-calendar"><small>WEDNESDAY</small><b>9</b><span>Explore something new<br>10:00–11:00</span></div></div><div class="app-grid">${apps.map(appIcon).join('')}</div><div class="dots"><b>•</b> •</div></div></div><div class="dock">${dockApps.map(appIcon).join('')}</div>`;}
+function widgets(){return `<div class="widget-column"><div class="memory-widget"><button data-app="photos" aria-label="Open photo memories"><img src="${photos[1].src}" alt="Portrait memory" referrerpolicy="no-referrer"><span class="memory-caption"><strong>On This Day</strong><small>SEPTEMBER 9, 2026</small></span><span class="memory-play">▶</span></button></div></div>`;}
+function home(){return `<div class="home-layout">${widgets()}<div class="app-section"><div class="top-widgets"><div class="tiny-weather"><small>San Francisco</small><b class="weather-degree">54°</b><span>☀<br>Partly Cloudy<br>H:57° L:49°</span></div><div class="tiny-calendar"><small>WEDNESDAY</small><b>9</b><span>Explore something new<br>10:00–11:00</span></div></div><div class="app-grid">${apps.map(appIcon).join('')}</div><div class="dots"><b>•</b> •</div></div></div><div class="dock">${dockApps.map(appIcon).join('')}</div>`;}
 function photoGrid(){return `<h2 class="photo-heading">Your moments.</h2><div class="photo-subtitle">Sample camera photos · Apple</div><div class="photo-grid">${[...photos,...photos].map((p,i)=>`<button data-photo="${i%3}" aria-label="View ${p.alt}"><img src="${p.src}" alt="${p.alt}" loading="lazy" referrerpolicy="no-referrer"></button>`).join('')}</div>`;}
 function mail(){return `<div class="mail-item"><b>Alex Morgan</b><br>A weekend worth remembering<p>These photos turned out so well. Let’s do it again soon.</p><small>9:32 AM</small></div><div class="mail-item"><b>Design notes</b><br>A little more space<p>Room for your ideas, and everything beside them.</p><small>Yesterday</small></div><div class="mail-item"><b>Your itinerary</b><p>A quiet morning. A new place to explore.</p><small>Tuesday</small></div>`;}
 function settings(){return `<div class="settings-row">Dark appearance<input data-setting="dark" class="toggle" type="checkbox" aria-label="Dark appearance" ${state.dark?'checked':''}></div><label class="settings-row">Brightness<input data-setting="brightness" type="range" min="35" max="100" value="${state.brightness}"></label><div class="settings-row">Display<span>${state.angle<35?'Outer':'Inner'}</span></div><div class="settings-row">About<span>Interactive concept</span></div>`;}
@@ -79,30 +81,54 @@ function changeApp(name){state.app=name;state.locked=false;state.photo=null;if([
 function updateLabels(){const a=state.angle;$('#angle-value').textContent=Math.round(a);$('#fold-slider').value=String(a);$('#fold-state').textContent=a>172?'Fully open':a<8?'Folded closed':a>70&&a<110?'Halfway open':'In motion';$('#stage-label').textContent=a<45?'OUTER DISPLAY · COMPACT':state.rotated?'INNER DISPLAY · PORTRAIT':'INNER DISPLAY · LANDSCAPE';$('#continuity-progress').style.width=(a/180*100)+'%';$('#transition-description').textContent=a<35?'Your active app continues on the outer display. The dock stays within reach.':a<125?'A soft blur follows the hinge. Widgets reveal as the larger screen opens.':'The app grid settles on the right. Widgets fill the extra room on the left.';$('#state-caption').textContent=state.app==='split'?'Two apps. One continuous experience.':a<35?'Everything you need, folded into one hand.':'More space. Same familiar feeling.';$$('[data-angle]').forEach(b=>b.classList.toggle('selected',Math.abs(Number(b.dataset.angle)-a)<7));}
 function setAngle(value){
  state.angle=Math.max(0,Math.min(180,Number(value)));
- const a=state.angle,fold=180-a,device=$('#device');
+ const a=state.angle,fold=180-a,device=deviceNode;
  // The left leaf closes toward the right; the right leaf remains anchored.
  device.style.setProperty('--left-angle',fold+'deg');
+ device.style.setProperty('--leaf-lift',(12*(fold/180))+'px');
  device.style.setProperty('--right-angle','0deg');
- device.style.setProperty('--center-shift',(-155*(1-a/180))+'px');
- device.style.setProperty('--fold-shade',String(Math.sin(fold*Math.PI/180)*.52));
- const reveal=smoothStep((a-30)/110);
- device.style.setProperty('--widget-opacity',String(reveal));
- // Negative X settles to zero: content reveals from left to right.
- device.style.setProperty('--widget-x',(-44*(1-reveal))+'px');
- device.style.setProperty('--content-x',(-18*(1-reveal))+'px');
- device.style.setProperty('--widget-blur',((1-reveal)*10)+'px');
- device.style.setProperty('--inner-blur',(Math.sin(reveal*Math.PI)*2)+'px');
- device.style.setProperty('--outer-blur',(smoothStep((a-12)/65)*9)+'px');
+ const radians=fold*Math.PI/180, depth=Math.sin(radians);
+ device.style.setProperty('--center-shift',(-155*Math.sin(radians/2))+'px');
+ device.style.setProperty('--tilt-x',(3+depth*5)+'deg');
+ device.style.setProperty('--turn',(-depth*7)+'deg');
+ device.style.setProperty('--fold-shade',String(depth*.36));
+ device.style.setProperty('--reflection',String(depth*.19));
+ device.style.setProperty('--reflection-x',(100-fold*.7)+'%');
+ stageNode.style.setProperty('--shadow-scale',String(.52+.48*a/180));
+ stageNode.style.setProperty('--shadow-opacity',String(.12+depth*.1));
  updateLabels();updateInert();
 }
+function updateContinuity(a){
+ const device=deviceNode;
+ const reveal=smoothStep((a-105)/75);
+ // The reference blurs and shades the left display while the app grid stays sharp.
+ device.style.setProperty('--fold-wash',String((1-reveal)*.82));
+ device.style.setProperty('--left-blur',(reducedMotion.matches?0:(1-reveal)*12)+'px');
+ device.style.setProperty('--inner-y','0px');
+ device.style.setProperty('--widget-opacity','1');
+ device.style.setProperty('--widget-x','0px');
+ device.style.setProperty('--content-x','0px');
+ device.style.setProperty('--widget-blur','0px');
+ device.style.setProperty('--widget-scale','1');
+ device.style.setProperty('--inner-blur','0px');
+ const cover=smoothStep((72-a)/56);
+ device.style.setProperty('--outer-blur',((1-cover)*4)+'px');
+ device.style.setProperty('--cover-opacity',String(.3+.7*cover));
+ device.style.setProperty('--cover-scale',String(.96+.04*cover));
+ device.style.setProperty('--wallpaper-x',(-10*(1-reveal))+'px');
+ for(let column=0;column<4;column++){
+   device.style.setProperty('--icon-y-'+column,'0px');
+   device.style.setProperty('--icon-scale-'+column,'1');
+ }
+}
 function stop(){state.playing=false;motion=null;scrubTarget=null;$('#play-text').textContent='Play the fold';$('#play-icon').textContent='▶';}
-function animateTo(target){stop();motion={from:state.angle,to:target,start:performance.now(),duration:Math.max(450,2400*Math.abs(target-state.angle)/180)/state.speed};}
-function play(){if(state.playing){stop();return;}motion=null;scrubTarget=null;state.playing=true;cyclePhase=Math.acos(Math.max(-1,Math.min(1,state.angle/90-1)));$('#play-text').textContent='Pause animation';$('#play-icon').textContent='Ⅱ';}
+function animateTo(target){stop();if(reducedMotion.matches){setAngle(target);uiAngle=target;updateContinuity(target);return;}motion={from:state.angle,to:target,start:performance.now(),duration:Math.max(600,1850*Math.sqrt(Math.abs(target-state.angle)/180))/state.speed};}
+function play(){if(reducedMotion.matches){animateTo(state.angle<90?180:0);return;}if(state.playing){stop();return;}motion=null;scrubTarget=null;state.playing=true;const p=state.angle/180;let low=0,high=1;for(let i=0;i<18;i++){const mid=(low+high)/2;if(smoothStep(mid)<p)low=mid;else high=mid;}cyclePhase=Math.acos(2*(.08+.84*(low+high)/2)-1);$('#play-text').textContent='Pause animation';$('#play-icon').textContent='Ⅱ';}
 function frame(stamp){
  const dt=Math.min(Math.max(0,(stamp-lastStamp)/1000),.06);lastStamp=stamp;
  if(scrubTarget!==null){const next=state.angle+(scrubTarget-state.angle)*(1-Math.exp(-22*dt));if(Math.abs(next-scrubTarget)<.02){setAngle(scrubTarget);scrubTarget=null;}else setAngle(next);}
  else if(motion){const p=Math.min(1,(stamp-motion.start)/motion.duration);setAngle(motion.from+(motion.to-motion.from)*smoothStep(p));if(p===1)motion=null;}
- else if(state.playing){cyclePhase+=dt*Math.PI/2.8*state.speed;setAngle(90*(1+Math.cos(cyclePhase)));}
+ else if(state.playing){cyclePhase+=dt*Math.PI/3.6*state.speed;const wave=(1+Math.cos(cyclePhase))/2;setAngle(180*smoothStep(Math.max(0,Math.min(1,(wave-.08)/.84))));}
+ if(Math.abs(uiAngle-state.angle)>.001){uiAngle+=(state.angle-uiAngle)*(reducedMotion.matches?1:1-Math.exp(-16*dt));updateContinuity(uiAngle);}
  requestAnimationFrame(frame);
 }
 function fit(){const stage=$('#stage');const scale=Math.min(1.12,(stage.clientWidth-48)/(state.rotated?440:640),(stage.clientHeight-104)/(state.rotated?640:440));$('#device-wrap').style.setProperty('--device-scale',String(Math.max(.28,scale)));}
@@ -121,7 +147,7 @@ $('#stage').addEventListener('click',e=>{const el=e.target.closest('[data-app],[
 $('#stage').addEventListener('input',e=>{if(e.target.matches('.notes-text')){state.note=e.target.value;$$('.notes-text').forEach(x=>{if(x!==e.target)x.value=state.note;});}if(e.target.dataset.setting==='brightness'){state.brightness=Number(e.target.value);$$('.screen-canvas,.outer-display').forEach(x=>x.style.filter=`brightness(${state.brightness/100})`);}});
 $('#stage').addEventListener('change',e=>{if(e.target.dataset.setting==='dark'){state.dark=e.target.checked;renderScreens();}});
 document.addEventListener('keydown',e=>{if(e.target.closest('input,select,textarea,button,a,dialog'))return;if(e.code==='Space'){e.preventDefault();play();}if(e.code==='ArrowLeft'||e.code==='ArrowRight'){e.preventDefault();stop();setAngle(state.angle+(e.code==='ArrowLeft'?-5:5));}if(e.code==='Escape'){state.photo=null;renderScreens();}});
-new ResizeObserver(fit).observe($('#stage'));renderScreens();setAngle(180);fit();requestAnimationFrame(frame);
+new ResizeObserver(fit).observe($('#stage'));renderScreens();setAngle(180);updateContinuity(180);fit();requestAnimationFrame(frame);
 $('#about').addEventListener('close',()=>$('.reference-video').pause());
 const registry=document.modelContext;
 if(registry?.registerTool){
