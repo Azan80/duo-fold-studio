@@ -31,3 +31,9 @@ This is an approximation, not Apple software or an exact reproduction of iOS. Ca
 ## Validation
 
 JavaScript syntax and whitespace checks pass. Run `node tests/fold-geometry.mjs` to check the level top and bottom display edges, fixed hinge corners, and unchanged open state across fold angles and sizes. Browser verification covers closed, partial and open poses; the broad left-screen reveal; both finishes; app and note continuity; responsive layout; and absence of application console errors. The optional WebMCP configuration and read tools were exercised in the local browser.
+
+## Mobile rendering
+
+Small screens and touch devices use 14 shell layers instead of 50, retain only the three active-finish bezel images, and avoid nested backdrop filters. Hidden front/inner faces are removed from rendering. The same fold geometry and stationary blur remain; mobile updates are capped at 30 fps. Animation frames stop after the display settles, and playback pauses when the document is hidden.
+
+Mobile viewport checks verify the lower layer/image counts, idle scheduler shutdown, repeated folding, and no console errors. These checks are not a substitute for testing on the specific physical phone that reported a browser crash.

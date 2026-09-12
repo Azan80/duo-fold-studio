@@ -91,3 +91,12 @@ main{padding:0 4%}
 @media(max-width:1100px) and (min-width:781px){.workspace{grid-template-columns:144px minmax(280px,1fr) 166px}.stage{min-height:480px}.experience{font-size:11px;padding:12px 6px}.experience small{font-size:9px}.right-panel{padding-left:12px}.intro h1{font-size:26px}}
 @media(max-width:780px){.header{height:62px}.intro{padding:12px 0 18px}.intro h1{font-size:25px}.intro h1 br{display:block}.intro h1 span{margin:0}.intro p{display:none}.workspace{grid-template-columns:1fr}.left-panel{padding:12px 0}.stage{height:440px;min-height:390px;border-bottom:1px solid #dddfe4}.right-panel{padding:22px 6px}.device-wrap{top:48%}.stage-shadow{bottom:60px}.stage-bottom{bottom:19px}.experience{padding:9px 8px;font-size:10px}.footer{line-height:1.5}}
 @media(max-width:450px){.stage{height:365px;min-height:365px}.intro h1{font-size:23px}.stage-bottom{font-size:9px}.experience{padding:9px 5px;font-size:9px}}
+
+/* Bound mobile compositor memory; preserve the same screen warp and shading. */
+.bezel-dynamic{display:block!important}
+.mobile-rendering .device *{will-change:auto!important}
+.mobile-rendering .device .dock,.mobile-rendering .device .memory-play{backdrop-filter:none;-webkit-backdrop-filter:none}
+.mobile-rendering .device .dock{background:linear-gradient(130deg,#e3e8ed99,#d3dce477)}
+.mobile-rendering .display-blur{overflow:hidden}
+.mobile-rendering #inner-left .display-blur{width:315px}
+.mobile-rendering #inner-left .display-blur>.phone-ui{width:602px}

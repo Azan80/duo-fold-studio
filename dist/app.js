@@ -1,26 +1,29 @@
 import {innerDisplayProjection,coverDisplayProjection} from './fold-geometry.js';
 const $ = (s, root = document) => root.querySelector(s);
 const $$ = (s, root = document) => [...root.querySelectorAll(s)];
+const mobileRendering=matchMedia('(max-width: 780px), (pointer: coarse)').matches;
+document.documentElement.classList.toggle('mobile-rendering',mobileRendering);
 // The cover screen belongs to the moving left half in this fold direction.
 const coverFace=$('.right-leaf .outside'),rearFace=$('.left-leaf .rear');
 $('.left-leaf').append(coverFace);
 $('.right-leaf').append(rearFace);
-for(const finish of ['dark','silver']){
- const rim=document.createElement('img');rim.alt='';rim.className='bezel-surface bezel-'+finish;
- rim.src=`assets/hardware/bezel-${finish}-cover.png`;rim.draggable=false;coverFace.append(rim);
+for(const finish of ['dark']){
+ const rim=document.createElement('img');rim.alt='';rim.className='bezel-surface bezel-dynamic';
+ rim.src=`assets/hardware/bezel-${finish}-cover.png`;rim.draggable=false;rim.dataset.bezel='cover';coverFace.append(rim);
 }
 for(const side of ['left','right']){
  const leaf=$('.'+side+'-leaf');
- for(const finish of ['dark','silver']){
-  const rim=document.createElement('img');rim.alt='';rim.className='bezel-surface bezel-'+finish;
-  rim.src=`assets/hardware/bezel-${finish}-${side}.png`;rim.draggable=false;
+ for(const finish of ['dark']){
+  const rim=document.createElement('img');rim.alt='';rim.className='bezel-surface bezel-dynamic';
+  rim.src=`assets/hardware/bezel-${finish}-${side}.png`;rim.draggable=false;rim.dataset.bezel=side;
   $('.inside',leaf).append(rim);
  }
  // Continuous rounded cross-sections join the front and rear bezels, including
  // their corners. Separate flat side strips left holes and protruding end caps.
- for(let i=0;i<=24;i++){
+ const shellSteps=mobileRendering?6:24;
+ for(let i=0;i<=shellSteps;i++){
   const shell=document.createElement('div');shell.className='shell-slice';shell.setAttribute('aria-hidden','true');
-  const t=i/24;shell.style.setProperty('--shell-z',(-3.9+7.8*t)+'px');
+  const t=i/shellSteps;shell.style.setProperty('--shell-z',(-3.9+7.8*t)+'px');
   shell.style.setProperty('--shell-hinge',`calc(var(--hinge-radius,3px) * ${t} + ${26*(1-t)}px)`);
   leaf.append(shell);
  }
@@ -62,7 +65,7 @@ const photos=[
 ];
 const state={angle:180,experience:'home',app:'home',finish:'dark',locked:false,dark:false,brightness:100,note:'A little room for big ideas.\n\nTry folding the phone while you write.\nYour note stays with you.',photo:null,captured:false,playing:false,speed:1,rotated:false,track:false,calc:'0',transitionId:0};
 let motion=null,lastStamp=0,cyclePhase=0,scrubTarget=null,uiAngle=180,displayClarity=1;
-let displayScale=1,displayVanishingY=199;
+let displayScale=1,displayVanishingY=199,frameId=0;
 const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
 const deviceNode=$('#device'),stageNode=$('#stage');
 const smoothStep=t=>{const x=Math.max(0,Math.min(1,t));return x*x*x*(x*(x*6-15)+10);};
@@ -133,7 +136,11 @@ function setAngle(value){
  stageNode.style.setProperty('--shadow-scale',String(.52+.48*a/180));
  stageNode.style.setProperty('--shadow-opacity',String(.12+depth*.1));
  updateDisplayProjection();
- updateLabels();updateInert();
+ if(mobileRendering){
+  $('.left-leaf .inside').style.display=a<70?'none':'';
+  coverFace.style.display=a>110?'none':'';
+ }
+ updateLabels();updateInert();requestFrame();
 }
 function updateDisplayProjection(){
  const vanishingY=state.rotated?199+155*Math.sin((180-state.angle)*Math.PI/360):displayVanishingY;
@@ -172,16 +179,19 @@ function updateContinuity(a,dt=1/60,instant=false){
  device.style.setProperty('--cover-opacity','1');
  device.style.setProperty('--cover-scale','1');
 }
-function stop(){state.playing=false;motion=null;scrubTarget=null;$('#play-text').textContent='Play the fold';$('#play-icon').textContent='▶';}
-function animateTo(target){stop();if(reducedMotion.matches){setAngle(target);uiAngle=target;updateContinuity(target);return;}motion={from:state.angle,to:target,start:performance.now(),duration:Math.max(600,1850*Math.sqrt(Math.abs(target-state.angle)/180))/state.speed};}
-function play(){if(reducedMotion.matches){animateTo(state.angle<90?180:0);return;}if(state.playing){stop();return;}motion=null;scrubTarget=null;state.playing=true;const p=state.angle/180;let low=0,high=1;for(let i=0;i<18;i++){const mid=(low+high)/2;if(smoothStep(mid)<p)low=mid;else high=mid;}cyclePhase=Math.acos(2*(.08+.84*(low+high)/2)-1);$('#play-text').textContent='Pause animation';$('#play-icon').textContent='Ⅱ';}
+function requestFrame(){if(!frameId&&!document.hidden)frameId=requestAnimationFrame(frame);}
+function stop(){if(frameId)cancelAnimationFrame(frameId);frameId=0;state.playing=false;motion=null;scrubTarget=null;$('#play-text').textContent='Play the fold';$('#play-icon').textContent='▶';}
+function animateTo(target){stop();if(reducedMotion.matches){setAngle(target);uiAngle=target;updateContinuity(target);return;}motion={from:state.angle,to:target,start:performance.now(),duration:Math.max(600,1850*Math.sqrt(Math.abs(target-state.angle)/180))/state.speed};requestFrame();}
+function play(){if(reducedMotion.matches){animateTo(state.angle<90?180:0);return;}if(state.playing){stop();return;}motion=null;scrubTarget=null;state.playing=true;const p=state.angle/180;let low=0,high=1;for(let i=0;i<18;i++){const mid=(low+high)/2;if(smoothStep(mid)<p)low=mid;else high=mid;}cyclePhase=Math.acos(2*(.08+.84*(low+high)/2)-1);$('#play-text').textContent='Pause animation';$('#play-icon').textContent='Ⅱ';requestFrame();}
 function frame(stamp){
+ frameId=0;
+ if(mobileRendering&&lastStamp&&stamp-lastStamp<1000/30-1){requestFrame();return;}
  const dt=Math.min(Math.max(0,(stamp-lastStamp)/1000),.06);lastStamp=stamp;
  if(scrubTarget!==null){const next=state.angle+(scrubTarget-state.angle)*(1-Math.exp(-22*dt));if(Math.abs(next-scrubTarget)<.02){setAngle(scrubTarget);scrubTarget=null;}else setAngle(next);}
  else if(motion){const p=Math.min(1,(stamp-motion.start)/motion.duration);setAngle(motion.from+(motion.to-motion.from)*smoothStep(p));if(p===1)motion=null;}
  else if(state.playing){cyclePhase+=dt*Math.PI/3.6*state.speed;const wave=(1+Math.cos(cyclePhase))/2;setAngle(180*smoothStep(Math.max(0,Math.min(1,(wave-.08)/.84))));}
  if(Math.abs(uiAngle-state.angle)>.001||Math.abs(displayClarity-clarityAtAngle(state.angle))>.0001){uiAngle=state.angle;updateContinuity(uiAngle,dt);}
- requestAnimationFrame(frame);
+ if(motion||scrubTarget!==null||state.playing||Math.abs(displayClarity-clarityAtAngle(state.angle))>.0001)requestFrame();
 }
 function fit(){
  const stage=$('#stage'),wrap=$('#device-wrap');
@@ -190,12 +200,12 @@ function fit(){
  displayVanishingY=199+(stage.clientHeight/2-wrap.offsetTop)/displayScale;
  wrap.style.setProperty('--device-scale',String(displayScale));updateDisplayProjection();
 }
-$('#fold-slider').addEventListener('input',e=>{const target=Number(e.target.value);stop();scrubTarget=target;});
+$('#fold-slider').addEventListener('input',e=>{const target=Number(e.target.value);stop();scrubTarget=target;requestFrame();});
 $$('[data-angle]').forEach(b=>b.addEventListener('click',()=>animateTo(Number(b.dataset.angle))));
 $('#play-button').addEventListener('click',play);
 $('#speed').addEventListener('change',e=>state.speed=Number(e.target.value));
 $$('[data-experience]').forEach(b=>b.addEventListener('click',()=>changeApp(b.dataset.experience)));
-$$('[data-finish]').forEach(b=>b.addEventListener('click',()=>{state.finish=b.dataset.finish;$('#device').classList.toggle('light-finish',state.finish==='light');$$('[data-finish]').forEach(x=>{x.classList.toggle('selected',x===b);x.setAttribute('aria-pressed',String(x===b));});$('#finish-name').textContent=state.finish==='light'?'Star White':'Night Sky';}));
+$$('[data-finish]').forEach(b=>b.addEventListener('click',()=>{state.finish=b.dataset.finish;$$('.bezel-dynamic').forEach(rim=>{rim.src=`assets/hardware/bezel-${state.finish==='light'?'silver':'dark'}-${rim.dataset.bezel}.png`;});$('#device').classList.toggle('light-finish',state.finish==='light');$$('[data-finish]').forEach(x=>{x.classList.toggle('selected',x===b);x.setAttribute('aria-pressed',String(x===b));});$('#finish-name').textContent=state.finish==='light'?'Star White':'Night Sky';}));
 $('#rotate-button').addEventListener('click',()=>{state.rotated=!state.rotated;$('#device').style.setProperty('--rotate',state.rotated?'-90deg':'0deg');updateLabels();fit();});
 $('#reset-button').addEventListener('click',()=>{stop();state.locked=false;state.rotated=false;state.photo=null;$('#device').style.setProperty('--rotate','0deg');changeApp('home');animateTo(180);fit();});
 $('#power-button').addEventListener('click',()=>{state.locked=!state.locked;renderScreens();});
@@ -205,7 +215,9 @@ $('#stage').addEventListener('click',e=>{const el=e.target.closest('[data-app],[
 $('#stage').addEventListener('input',e=>{if(e.target.matches('.notes-text')){state.note=e.target.value;$$('.notes-text').forEach(x=>{if(x!==e.target)x.value=state.note;});}if(e.target.dataset.setting==='brightness'){state.brightness=Number(e.target.value);$$('.screen-canvas,.outer-display').forEach(x=>x.style.filter=`brightness(${state.brightness/100})`);}});
 $('#stage').addEventListener('change',e=>{if(e.target.dataset.setting==='dark'){state.dark=e.target.checked;renderScreens();}});
 document.addEventListener('keydown',e=>{if(e.target.closest('input,select,textarea,button,a,dialog'))return;if(e.code==='Space'){e.preventDefault();play();}if(e.code==='ArrowLeft'||e.code==='ArrowRight'){e.preventDefault();stop();setAngle(state.angle+(e.code==='ArrowLeft'?-5:5));}if(e.code==='Escape'){state.photo=null;renderScreens();}});
-new ResizeObserver(fit).observe($('#stage'));renderScreens();setAngle(180);updateContinuity(180);fit();requestAnimationFrame(frame);
+new ResizeObserver(fit).observe($('#stage'));renderScreens();setAngle(180);updateContinuity(180);fit();requestFrame();
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();else{lastStamp=performance.now();requestFrame();}});
+window.addEventListener('pagehide',stop);
 $('#about').addEventListener('close',()=>$('.reference-video').pause());
 const registry=document.modelContext;
 if(registry?.registerTool){
@@ -217,6 +229,6 @@ if(registry?.registerTool){
   if(input.experience!==undefined&&!['home','photos','split','camera','standby'].includes(input.experience))throw new Error('Unknown experience.');
   stop();if(input.experience!==undefined)changeApp(input.experience);if(input.angle!==undefined)setAngle(input.angle);return {angle:state.angle,experience:state.experience};
  }});
- register({name:'read_phone_demo',description:'Read the current fold angle and open phone experience.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true,untrustedContentHint:false},execute(){return {angle:state.angle,experience:state.experience,app:state.app,playing:state.playing};}});
+ register({name:'read_phone_demo',description:'Read the current fold angle, open phone experience, and rendering activity.',inputSchema:{type:'object',properties:{},additionalProperties:false},annotations:{readOnlyHint:true,untrustedContentHint:false},execute(){return {angle:state.angle,experience:state.experience,app:state.app,playing:state.playing,rendering:{mobile:mobileRendering,framePending:frameId!==0,shellLayers:$$('.shell-slice').length}};}});
  window.addEventListener('pagehide',()=>lifecycle.abort(),{once:true});
 }
