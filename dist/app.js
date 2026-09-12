@@ -1,9 +1,30 @@
+import {innerDisplayProjection,coverDisplayProjection} from './fold-geometry.js';
 const $ = (s, root = document) => root.querySelector(s);
 const $$ = (s, root = document) => [...root.querySelectorAll(s)];
 // The cover screen belongs to the moving left half in this fold direction.
 const coverFace=$('.right-leaf .outside'),rearFace=$('.left-leaf .rear');
 $('.left-leaf').append(coverFace);
 $('.right-leaf').append(rearFace);
+for(const finish of ['dark','silver']){
+ const rim=document.createElement('img');rim.alt='';rim.className='bezel-surface bezel-'+finish;
+ rim.src=`assets/hardware/bezel-${finish}-cover.png`;rim.draggable=false;coverFace.append(rim);
+}
+for(const side of ['left','right']){
+ const leaf=$('.'+side+'-leaf');
+ for(const finish of ['dark','silver']){
+  const rim=document.createElement('img');rim.alt='';rim.className='bezel-surface bezel-'+finish;
+  rim.src=`assets/hardware/bezel-${finish}-${side}.png`;rim.draggable=false;
+  $('.inside',leaf).append(rim);
+ }
+ // Continuous rounded cross-sections join the front and rear bezels, including
+ // their corners. Separate flat side strips left holes and protruding end caps.
+ for(let i=0;i<=24;i++){
+  const shell=document.createElement('div');shell.className='shell-slice';shell.setAttribute('aria-hidden','true');
+  const t=i/24;shell.style.setProperty('--shell-z',(-3.9+7.8*t)+'px');
+  shell.style.setProperty('--shell-hinge',`calc(var(--hinge-radius,3px) * ${t} + ${26*(1-t)}px)`);
+  leaf.append(shell);
+ }
+}
 const escapeHTML = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const paths = {
  camera:'<path d="M14 4l2 3h4v13H4V7h4l2-3z"/><circle cx="12" cy="13" r="4"/>',
@@ -40,10 +61,12 @@ const photos=[
  {src:photoBase+'Apple-iPhone-Duo-2x-Telephoto-260909_big.jpg.large.jpg',alt:'Portrait in an open landscape'}
 ];
 const state={angle:180,experience:'home',app:'home',finish:'dark',locked:false,dark:false,brightness:100,note:'A little room for big ideas.\n\nTry folding the phone while you write.\nYour note stays with you.',photo:null,captured:false,playing:false,speed:1,rotated:false,track:false,calc:'0',transitionId:0};
-let motion=null,lastStamp=0,cyclePhase=0,scrubTarget=null,uiAngle=180;
+let motion=null,lastStamp=0,cyclePhase=0,scrubTarget=null,uiAngle=180,displayClarity=1;
+let displayScale=1,displayVanishingY=199;
 const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
 const deviceNode=$('#device'),stageNode=$('#stage');
 const smoothStep=t=>{const x=Math.max(0,Math.min(1,t));return x*x*x*(x*(x*6-15)+10);};
+const clarityAtAngle=a=>smoothStep((a-150)/30);
 function appIcon(app){const [id,name,color]=app;let content=id==='calendar'?'<small>WED</small>9':id==='photos'?`<svg viewBox="0 0 40 40" aria-hidden="true">${['#ffb52b','#f6d935','#85c94d','#36bfa4','#43a6df','#7376d9','#cd68b7','#f17375'].map((c,i)=>`<ellipse cx="20" cy="11" rx="6" ry="10" fill="${c}" fill-opacity=".86" transform="rotate(${i*45} 20 20)"/>`).join('')}</svg>`:id==='tv'?'tv':id==='store'?'A':id==='wallet'?'▰':id==='shortcuts'?'◈':icon(id);return `<button class="app-item" data-app="${id}" aria-label="Open ${name}"><span class="app-square ${id}-icon" style="--app-color:${color}">${content}</span><span>${name}</span></button>`;}
 function statusBar(){return `<div class="statusbar"><span>9:41</span><span class="status-icons">${icon('signal')}${icon('wifi')}<i class="battery"></i></span></div>`;}
 function widgets(){return `<div class="widget-column"><div class="memory-widget"><button data-app="photos" aria-label="Open photo memories"><img src="${photos[1].src}" alt="Portrait memory" referrerpolicy="no-referrer"><span class="memory-caption"><strong>On This Day</strong><small>SEPTEMBER 9, 2026</small></span><span class="memory-play">▶</span></button></div></div>`;}
@@ -75,50 +98,79 @@ function screen(){let view='';if(state.locked){view=`<div class="lock-screen"><p
  if(state.photo!==null)view+=`<div class="photo-full"><img src="${photos[state.photo].src}" alt="${photos[state.photo].alt}"><button data-action="close-photo" aria-label="Close photo">×</button></div>`;
  return `<div class="phone-ui ${state.dark?'dark-screen':''}"><div class="wallpaper"></div>${statusBar()}${view}<button class="home-indicator" data-app="home" aria-label="Return to home screen"></button></div>`;
 }
-function renderScreens(){const html=screen();for(const id of ['inner-left','inner-right','outer-screen'])$('#'+id).innerHTML=html;$$('[data-experience]').forEach(b=>{const active=b.dataset.experience===state.experience;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});updateInert();}
+function renderScreens(){
+ const html=screen();
+ for(const id of ['inner-left','inner-right','outer-screen'])$('#'+id).innerHTML=html;
+ for(const id of ['inner-left','outer-screen']){
+ const surface=document.createElement('div');surface.className='display-content'+(id==='outer-screen'?' cover-content':'');
+ surface.append($('#'+id+'>.phone-ui'));$('#'+id).append(surface);
+ // A blurred copy shades the same content through a stationary mask.
+ // It is decorative: the underlying live screen retains all interaction.
+ const blur=document.createElement('div');blur.className='display-blur';blur.inert=true;blur.setAttribute('aria-hidden','true');blur.innerHTML=html;surface.append(blur);
+ }
+ $$('[data-experience]').forEach(b=>{const active=b.dataset.experience===state.experience;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});updateInert();
+}
 function updateInert(){const closed=state.angle<45;$('#inner-left').inert=closed;$('#inner-right').inert=closed;$('#outer-screen').inert=!closed;}
 function changeApp(name){state.app=name;state.locked=false;state.photo=null;if(['home','photos','split','camera','standby'].includes(name))state.experience=name;renderScreens();updateLabels();}
-function updateLabels(){const a=state.angle;$('#angle-value').textContent=Math.round(a);$('#fold-slider').value=String(a);$('#fold-state').textContent=a>172?'Fully open':a<8?'Folded closed':a>70&&a<110?'Halfway open':'In motion';$('#stage-label').textContent=a<45?'OUTER DISPLAY · COMPACT':state.rotated?'INNER DISPLAY · PORTRAIT':'INNER DISPLAY · LANDSCAPE';$('#continuity-progress').style.width=(a/180*100)+'%';$('#transition-description').textContent=a<35?'Your active app continues on the outer display. The dock stays within reach.':a<125?'A soft blur follows the hinge. Widgets reveal as the larger screen opens.':'The app grid settles on the right. Widgets fill the extra room on the left.';$('#state-caption').textContent=state.app==='split'?'Two apps. One continuous experience.':a<35?'Everything you need, folded into one hand.':'More space. Same familiar feeling.';$$('[data-angle]').forEach(b=>b.classList.toggle('selected',Math.abs(Number(b.dataset.angle)-a)<7));}
+function updateLabels(){const a=state.angle;$('#angle-value').textContent=Math.round(a);$('#fold-slider').value=String(a);$('#fold-state').textContent=a>172?'Fully open':a<8?'Folded closed':a>70&&a<110?'Halfway open':'In motion';$('#stage-label').textContent=a<45?'OUTER DISPLAY · COMPACT':state.rotated?'INNER DISPLAY · PORTRAIT':'INNER DISPLAY · LANDSCAPE';$('#continuity-progress').style.width=(a/180*100)+'%';$('#transition-description').textContent=a<35?'Your active app continues on the outer display. The dock stays within reach.':a<160?'The right screen stays clear as the left display gradually comes into view.':'The soft shade fades as the display settles into focus.';$('#state-caption').textContent=state.app==='split'?'Two apps. One continuous experience.':a<35?'Everything you need, folded into one hand.':'More space. Same familiar feeling.';$$('[data-angle]').forEach(b=>b.classList.toggle('selected',Math.abs(Number(b.dataset.angle)-a)<7));}
 function setAngle(value){
  state.angle=Math.max(0,Math.min(180,Number(value)));
  const a=state.angle,fold=180-a,device=deviceNode;
  // The left leaf closes toward the right; the right leaf remains anchored.
  device.style.setProperty('--left-angle',fold+'deg');
- device.style.setProperty('--leaf-lift',(12*(fold/180))+'px');
+ // Keep the hinge aligned throughout opening; separate the shells only at closure.
+ device.style.setProperty('--leaf-lift',(12*(1-smoothStep(a/38)))+'px');
  device.style.setProperty('--right-angle','0deg');
+ device.style.setProperty('--hinge-radius',(3+23*(1-smoothStep(a/65)))+'px');
+ device.style.setProperty('--hinge-opacity',String(.22*smoothStep(a/90)));
  const radians=fold*Math.PI/180, depth=Math.sin(radians);
  device.style.setProperty('--center-shift',(-155*Math.sin(radians/2))+'px');
- device.style.setProperty('--tilt-x',(3+depth*5)+'deg');
- device.style.setProperty('--turn',(-depth*7)+'deg');
+ device.style.setProperty('--tilt-x','0deg');
+ device.style.setProperty('--turn','0deg');
  device.style.setProperty('--fold-shade',String(depth*.36));
  device.style.setProperty('--reflection',String(depth*.19));
  device.style.setProperty('--reflection-x',(100-fold*.7)+'%');
  stageNode.style.setProperty('--shadow-scale',String(.52+.48*a/180));
  stageNode.style.setProperty('--shadow-opacity',String(.12+depth*.1));
+ updateDisplayProjection();
  updateLabels();updateInert();
 }
-function updateContinuity(a){
+function updateDisplayProjection(){
+ const vanishingY=state.rotated?199+155*Math.sin((180-state.angle)*Math.PI/360):displayVanishingY;
+ const {matrix,bottom,top}=innerDisplayProjection(state.angle,displayScale,vanishingY);
+ deviceNode.style.setProperty('--left-content-transform',`matrix3d(${matrix.join(',')})`);
+ const feather=Math.min(24,(top+bottom)*.48),slope=feather/301;
+ const fadeAngle=Math.atan(slope)*180/Math.PI;
+ deviceNode.style.setProperty('--content-feather',(feather/Math.sqrt(1+slope*slope))+'px');
+ deviceNode.style.setProperty('--fade-top-angle',(180-fadeAngle)+'deg');
+ deviceNode.style.setProperty('--fade-bottom-angle',fadeAngle+'deg');
+ const cover=coverDisplayProjection(state.angle,displayScale,vanishingY);
+ const coverFeather=Math.min(24,(cover.top+cover.bottom)*.48),coverSlope=coverFeather/292;
+ const coverFadeAngle=Math.atan(coverSlope)*180/Math.PI;
+ deviceNode.style.setProperty('--cover-content-transform',`matrix3d(${cover.matrix.join(',')})`);
+ deviceNode.style.setProperty('--cover-feather',(coverFeather/Math.sqrt(1+coverSlope*coverSlope))+'px');
+ deviceNode.style.setProperty('--cover-fade-top-angle',(180+coverFadeAngle)+'deg');
+ deviceNode.style.setProperty('--cover-fade-bottom-angle',(360-coverFadeAngle)+'deg');
+}
+function updateContinuity(a,dt=1/60,instant=false){
  const device=deviceNode;
- const reveal=smoothStep((a-105)/75);
- // The reference blurs and shades the left display while the app grid stays sharp.
- device.style.setProperty('--fold-wash',String((1-reveal)*.82));
- device.style.setProperty('--left-blur',(reducedMotion.matches?0:(1-reveal)*12)+'px');
- device.style.setProperty('--inner-y','0px');
- device.style.setProperty('--widget-opacity','1');
- device.style.setProperty('--widget-x','0px');
- device.style.setProperty('--content-x','0px');
- device.style.setProperty('--widget-blur','0px');
- device.style.setProperty('--widget-scale','1');
- device.style.setProperty('--inner-blur','0px');
- const cover=smoothStep((72-a)/56);
- device.style.setProperty('--outer-blur',((1-cover)*4)+'px');
- device.style.setProperty('--cover-opacity',String(.3+.7*cover));
- device.style.setProperty('--cover-scale',String(.96+.04*cover));
- device.style.setProperty('--wallpaper-x',(-10*(1-reveal))+'px');
- for(let column=0;column<4;column++){
-   device.style.setProperty('--icon-y-'+column,'0px');
-   device.style.setProperty('--icon-scale-'+column,'1');
- }
+ const target=clarityAtAngle(a);
+ // Apple’s hero resolves the left panel late, after the pose is almost open.
+ // The curve is an approximation: the video does not publish sensor angles.
+ displayClarity=instant||reducedMotion.matches?target:displayClarity+(target-displayClarity)*(1-Math.exp(-(target>displayClarity?8:14)*dt));
+ if(Math.abs(target-displayClarity)<.0001)displayClarity=target;
+ // The shade stays in place. Only its softness and strength settle with the fold.
+ device.style.setProperty('--left-blur',((1-displayClarity)*14)+'px');
+ device.style.setProperty('--left-saturation',String(.94+.06*displayClarity));
+ device.style.setProperty('--fold-wash',String((1-displayClarity)*.64));
+ device.style.setProperty('--left-glass',String(.018+(1-displayClarity)*.035));
+ // Both displays remain active during the handoff; the exposed cover softens.
+ const coverShade=smoothStep((a-5)/65);
+ device.style.setProperty('--outer-blur',(coverShade*14)+'px');
+ device.style.setProperty('--cover-wash',String(coverShade*.64));
+ device.style.setProperty('--cover-saturation',String(1-coverShade*.06));
+ device.style.setProperty('--cover-opacity','1');
+ device.style.setProperty('--cover-scale','1');
 }
 function stop(){state.playing=false;motion=null;scrubTarget=null;$('#play-text').textContent='Play the fold';$('#play-icon').textContent='▶';}
 function animateTo(target){stop();if(reducedMotion.matches){setAngle(target);uiAngle=target;updateContinuity(target);return;}motion={from:state.angle,to:target,start:performance.now(),duration:Math.max(600,1850*Math.sqrt(Math.abs(target-state.angle)/180))/state.speed};}
@@ -128,10 +180,16 @@ function frame(stamp){
  if(scrubTarget!==null){const next=state.angle+(scrubTarget-state.angle)*(1-Math.exp(-22*dt));if(Math.abs(next-scrubTarget)<.02){setAngle(scrubTarget);scrubTarget=null;}else setAngle(next);}
  else if(motion){const p=Math.min(1,(stamp-motion.start)/motion.duration);setAngle(motion.from+(motion.to-motion.from)*smoothStep(p));if(p===1)motion=null;}
  else if(state.playing){cyclePhase+=dt*Math.PI/3.6*state.speed;const wave=(1+Math.cos(cyclePhase))/2;setAngle(180*smoothStep(Math.max(0,Math.min(1,(wave-.08)/.84))));}
- if(Math.abs(uiAngle-state.angle)>.001){uiAngle+=(state.angle-uiAngle)*(reducedMotion.matches?1:1-Math.exp(-16*dt));updateContinuity(uiAngle);}
+ if(Math.abs(uiAngle-state.angle)>.001||Math.abs(displayClarity-clarityAtAngle(state.angle))>.0001){uiAngle=state.angle;updateContinuity(uiAngle,dt);}
  requestAnimationFrame(frame);
 }
-function fit(){const stage=$('#stage');const scale=Math.min(1.12,(stage.clientWidth-48)/(state.rotated?440:640),(stage.clientHeight-104)/(state.rotated?640:440));$('#device-wrap').style.setProperty('--device-scale',String(Math.max(.28,scale)));}
+function fit(){
+ const stage=$('#stage'),wrap=$('#device-wrap');
+ const scale=Math.min(1.12,(stage.clientWidth-48)/(state.rotated?440:640),(stage.clientHeight-104)/(state.rotated?640:440));
+ displayScale=Math.max(.28,scale);
+ displayVanishingY=199+(stage.clientHeight/2-wrap.offsetTop)/displayScale;
+ wrap.style.setProperty('--device-scale',String(displayScale));updateDisplayProjection();
+}
 $('#fold-slider').addEventListener('input',e=>{const target=Number(e.target.value);stop();scrubTarget=target;});
 $$('[data-angle]').forEach(b=>b.addEventListener('click',()=>animateTo(Number(b.dataset.angle))));
 $('#play-button').addEventListener('click',play);

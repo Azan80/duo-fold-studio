@@ -1,0 +1,93 @@
+/* Hardware and display surfaces. The interface stays live beneath the bezel. */
+:root{--bg:#f5f5f7;--line:#dddfe4;--ink:#1d1d1f;--muted:#74747b;--accent:#24262c}
+body{background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif}
+.header{height:70px;border-bottom:0;padding:0 4%}
+main{padding:0 4%}
+.header-label{font-size:10px;letter-spacing:1.6px}
+.brand{font-family:inherit;font-weight:650;letter-spacing:-1px}
+.brand-light{letter-spacing:0}
+.intro{padding:15px 0 24px;align-items:center}
+.intro h1{font-family:inherit;font-size:30px;line-height:1.05;letter-spacing:-1.1px;margin-top:8px}
+.intro h1 br{display:none}.intro h1 span{margin-left:8px;font-weight:400;color:#86868b}
+.intro .eyebrow{font-size:9px;letter-spacing:1.5px}
+.intro p{font-size:12px}
+.workspace{grid-template-columns:172px minmax(360px,1fr) 198px;border-top:1px solid #e0e1e5;min-height:540px}
+.stage{height:calc(100svh - 234px);min-height:540px;max-height:820px;perspective:1800px;border:0;background:radial-gradient(ellipse at 50% 45%,#fff 12%,#f4f4f6 65%);isolation:isolate}
+.stage-label{top:26px;letter-spacing:1.5px;font-size:9px;color:#777b85}
+.stage-bottom{bottom:25px;font-size:11px}
+.device-wrap{top:49%}
+.left-panel{padding:22px 13px 22px 0}.right-panel{padding:22px 0 22px 18px}
+.panel-heading{font-size:10px;letter-spacing:1.4px;color:#92949b}
+.experience{font-size:12px;border-radius:12px;gap:10px;padding:12px 9px}
+.experience small{font-size:10px;line-height:1.5;color:#858991}
+.experience.active{background:#ffffffbb;border:1px solid #fff;box-shadow:0 3px 16px #191f3210;color:#1d1d1f}
+.experience-icon{color:#646b79}
+.outline,.pose-buttons button{background:#ffffff99;border:1px solid #d7d9df;box-shadow:inset 0 1px 0 #fff}
+.pose-buttons button.selected{background:#292b31;border-color:#292b31;color:#fff}
+.play-button{background:linear-gradient(#353840,#1c1e23);box-shadow:0 4px 12px #151b2b1a;border:1px solid #fff3;color:#fff;font-size:13px;border-radius:12px}
+.play-button:hover{background:#41444c}
+.angle-number{font-size:50px;letter-spacing:-2px}.fold-state{font-size:13px}
+.transition-info p{font-size:12px;line-height:1.6}.slider-label{font-size:12px}
+#fold-slider{accent-color:#3b414a}.progress-track i{background:#575e69}
+.footer{font-size:10px;color:#8a8d95}
+.phone-face{border-color:transparent;box-shadow:none;background:#131517;padding:9px;border-width:0;}
+.left-leaf .inside{padding-right:0;border-radius:26px var(--hinge-radius,3px) var(--hinge-radius,3px) 26px;box-shadow:none}
+.right-leaf .inside{padding-left:0;border-radius:var(--hinge-radius,3px) 26px 26px var(--hinge-radius,3px);box-shadow:none}
+.left-leaf .inside{clip-path:inset(0 round 26px var(--hinge-radius,3px) var(--hinge-radius,3px) 26px)}
+.right-leaf .inside{clip-path:inset(0 round var(--hinge-radius,3px) 26px 26px var(--hinge-radius,3px))}
+.inside{transform:translateZ(4px)}
+.light-finish .phone-face{border-color:transparent;background:#141618;box-shadow:none}
+.display-window{border-radius:18px 0 0 18px}
+.right-leaf .display-window{border-radius:0 18px 18px 0}
+.outside{padding:9px;border-radius:26px}
+.outer-display{border-radius:18px}
+.bezel-surface{position:absolute;inset:0;width:100%;height:100%;z-index:30;pointer-events:none;object-fit:fill;user-select:none;border-radius:inherit;backface-visibility:hidden}
+.bezel-silver{display:none}.light-finish .bezel-silver{display:block}.light-finish .bezel-dark{display:none}
+.inside:before,.outside:after{background:linear-gradient(145deg,#ffffff14 0%,#ffffff03 37%,transparent 63%);background-size:100%;opacity:1;z-index:24}
+.inside:after{display:none}
+.inside:before{display:none}
+.display-window:after,.outer-display:before{content:'';position:absolute;inset:0;z-index:23;pointer-events:none;border-radius:inherit;background:linear-gradient(120deg,#fff2,transparent 33%,#ffffff03 70%,#fff1);box-shadow:inset 0 0 1px 1px #ffffff10}
+.display-window:after{width:602px;right:auto;border-radius:0;box-shadow:none;background:linear-gradient(120deg,#ffffff20,transparent 36%,#ffffff06 70%,#ffffff0b)}
+.right-leaf .display-window:after{left:-301px}
+.hinge{background:linear-gradient(90deg,#1011121a,#ffffff18,#0000000c);opacity:var(--hinge-opacity,.22)!important;width:2px!important;left:309px!important;top:10px;bottom:10px;transform:translateZ(4.1px)}
+/* Closed rounded shell, sampled through its thickness rather than disconnected caps. */
+.leaf:before{display:none}
+.shell-slice{position:absolute;inset:0;pointer-events:none;transform:translateZ(var(--shell-z));backface-visibility:visible;background:linear-gradient(110deg,#626b73,#252b30 28%,#3f474e 74%,#8e989f);border:.65px solid #747f88;box-sizing:border-box}
+.left-leaf .shell-slice{border-radius:26px var(--shell-hinge) var(--shell-hinge) 26px}
+.right-leaf .shell-slice{border-radius:var(--shell-hinge) 26px 26px var(--shell-hinge)}
+.light-finish .shell-slice{background:linear-gradient(110deg,#f4f6f7,#9ca6ae 30%,#c4ccd2 73%,#e9eef1);border-color:#cad1d6}
+.side-buttons{right:-5px;top:102px;gap:24px;transform:translateZ(1px)}
+.side-buttons button{width:5px;border:1px solid #191c20;background:linear-gradient(90deg,#262b30,#a8adb2,#464c51);box-shadow:1px 0 1px #0006;border-radius:3px;height:37px}
+.side-buttons button+button{height:24px}
+.light-finish .side-buttons button{background:linear-gradient(90deg,#8b9195,#e7ebee,#9da3a8)}
+.outer-camera{right:15px;top:15px;width:9px;height:9px;background:radial-gradient(circle at 43% 35%,#4e6b8b 0%,#172a3b 16%,#010204 33%,#020306 70%,#4f545b 76%,#090b0d 85%);box-shadow:0 0 0 1px #ffffff30;z-index:32}
+.rear-panel{border-radius:18px;background:radial-gradient(ellipse at 25% 20%,#535d67,#242d36 60%,#192128);box-shadow:inset 0 0 18px #0005}
+.light-finish .rear-panel{background:radial-gradient(ellipse at 25% 20%,#f5f6f5,#cfd2d0 65%,#b0b5b4)}
+.camera-bump{background:linear-gradient(135deg,#373e45,#11181e);box-shadow:inset 0 0 0 1px #9ba5ad60,0 2px 8px #0005}
+.camera-bump i{background:radial-gradient(circle at 36% 28%,#53748f,#0b1525 22%,#020405 41%,#2d3338 47%,#080b0e 57%,#010203 71%,#9fa7ad 76%,#252b30 81%);box-shadow:0 0 0 2px #151a1e,0 1px 3px #000b}
+.stage-shadow{bottom:55px;height:22px;filter:blur(20px);background:#2c303a}
+.phone-ui{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;-webkit-font-smoothing:antialiased}
+.app-square{border-radius:10px;box-shadow:0 2px 5px #10203220,inset 0 1px 0 #ffffffaa,inset 0 -1px 1px #0000000d;border:1px solid #ffffff24;position:relative;overflow:hidden}
+.app-square:after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(145deg,#ffffff2b,transparent 45%,#ffffff08);box-shadow:inset 0 0 0 .5px #ffffff55}
+.dock{background:linear-gradient(130deg,#ffffff55,#ffffff25);border:1px solid #ffffff70;box-shadow:0 3px 10px #29303b15,inset 0 0 0 .5px #ffffff66;backdrop-filter:blur(22px) saturate(1.3)}
+.memory-widget{border-radius:18px!important;border:1px solid #ffffff25!important;box-shadow:0 1px 4px #1e293b18!important}
+.left-leaf .screen-canvas .phone-ui{filter:none;transform:none;will-change:auto}
+.display-content{position:absolute;inset:0;transform-origin:0 0;transform:var(--left-content-transform,none);--fade-stops:transparent 0,rgba(0,0,0,.08) calc(var(--content-feather,0px)*.2),rgba(0,0,0,.45) calc(var(--content-feather,0px)*.5),rgba(0,0,0,.9) calc(var(--content-feather,0px)*.8),#000 var(--content-feather,0px);mask-image:linear-gradient(var(--fade-top-angle,180deg),var(--fade-stops)),linear-gradient(var(--fade-bottom-angle,0deg),var(--fade-stops));mask-composite:intersect;-webkit-mask-image:linear-gradient(var(--fade-top-angle,180deg),var(--fade-stops)),linear-gradient(var(--fade-bottom-angle,0deg),var(--fade-stops));-webkit-mask-composite:source-in;}
+.display-blur{position:absolute;inset:0;z-index:12;pointer-events:none;mask-image:linear-gradient(90deg,#000 0px,#000 210px,transparent 315px);-webkit-mask-image:linear-gradient(90deg,#000 0px,#000 210px,transparent 315px)}
+.display-blur>.phone-ui{filter:blur(var(--left-blur,0px)) saturate(var(--left-saturation,1))!important;pointer-events:none}
+.screen-canvas:after{display:none}
+.left-leaf .screen-canvas:after{display:block;width:301px;background:linear-gradient(90deg,#0009,#0004 65%,#0000)}
+.wallpaper{background:#b6c7ca url('assets/wallpapers/desert.png') center/cover no-repeat}
+.wallpaper:before{display:none}
+.screen-canvas .wallpaper{transform:none}
+.outer-display{background:#000}
+.outer-display .phone-ui{filter:none}
+.cover-content{--left-content-transform:var(--cover-content-transform,none);--content-feather:var(--cover-feather,0px);--fade-top-angle:var(--cover-fade-top-angle,180deg);--fade-bottom-angle:var(--cover-fade-bottom-angle,360deg);--left-blur:var(--outer-blur,0px);--left-saturation:var(--cover-saturation,1)}
+.cover-content .display-blur{mask-image:linear-gradient(90deg,transparent 0px,#000 90px,#000 100%);-webkit-mask-image:linear-gradient(90deg,transparent 0px,#000 90px,#000 100%)}
+.outer-display:after{content:'';position:absolute;inset:0;z-index:20;pointer-events:none;background:linear-gradient(90deg,transparent,#0004 35%,#0009);opacity:var(--cover-wash,0)}
+.outer-display .home-layout,.outer-display .app-page{filter:none}
+.top-widgets>div{border:1px solid #ffffff25;box-shadow:0 1px 4px #1e293b15,inset 0 1px 0 #ffffff33}
+@media(prefers-reduced-motion:reduce){.display-blur,.left-leaf .screen-canvas:after{display:none}}
+@media(max-width:1100px) and (min-width:781px){.workspace{grid-template-columns:144px minmax(280px,1fr) 166px}.stage{min-height:480px}.experience{font-size:11px;padding:12px 6px}.experience small{font-size:9px}.right-panel{padding-left:12px}.intro h1{font-size:26px}}
+@media(max-width:780px){.header{height:62px}.intro{padding:12px 0 18px}.intro h1{font-size:25px}.intro h1 br{display:block}.intro h1 span{margin:0}.intro p{display:none}.workspace{grid-template-columns:1fr}.left-panel{padding:12px 0}.stage{height:440px;min-height:390px;border-bottom:1px solid #dddfe4}.right-panel{padding:22px 6px}.device-wrap{top:48%}.stage-shadow{bottom:60px}.stage-bottom{bottom:19px}.experience{padding:9px 8px;font-size:10px}.footer{line-height:1.5}}
+@media(max-width:450px){.stage{height:365px;min-height:365px}.intro h1{font-size:23px}.stage-bottom{font-size:9px}.experience{padding:9px 5px;font-size:9px}}
